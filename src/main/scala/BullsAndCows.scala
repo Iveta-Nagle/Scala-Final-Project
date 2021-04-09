@@ -1,11 +1,10 @@
 import scala.io.StdIn.readLine
+import scala.util.Random
 
 object BullsAndCows extends App {
 
   //https://en.wikipedia.org/wiki/Bulls_and_Cows
   println("Let's start Bulls and Cows game!")
-
-
 
   val playerA = readLine("What is your name, Player A?")
   var playerB = "Player B"
@@ -14,16 +13,22 @@ object BullsAndCows extends App {
   if (isPlayerBComputer) playerB = "Computer" else playerB = readLine("What is your name, Player B?")
 
   val players = Seq(playerA, playerB)
-  //TODO add entering player names and using them further
-  var playerASecretNumber = readLine("Player A, enter your 4-digit secret number: ")
-  var playerBSecretNumber = readLine("Player B, enter your 4-digit secret number: ")
+
+  val r = new Random()
+
+  var playerBSecretNumber = ""
+  var playerASecretNumber = ""
+  if (isPlayerBComputer) playerBSecretNumber = computerSecretNumber() else {
+    playerASecretNumber = readLine(s"$playerA, enter your 4-digit secret number: ")
+    playerBSecretNumber = readLine(s"$playerB, enter your 4-digit secret number: ")
+  }
   //TODO do numberValidator for entered secret number. Plus, need to make sure that digits do not repeat according to game rules
 
-  val gameResults = for (p <- players) yield (p, guessingProcess(secretNumberToGuess(p),p))
-
-  if (gameResults.minBy(_._2) == gameResults.maxBy(_._2)) println("No winner - the same number of guesses :) ")
-  else println(s"Congratulations, ${gameResults.minBy(_._2)._1}, you won!")
-
+  if (!isPlayerBComputer) {
+    val gameResults = for (p <- players) yield (p, guessingProcess(secretNumberToGuess(p, isPlayerBComputer), p))
+    if (gameResults.minBy(_._2) == gameResults.maxBy(_._2)) println("No winner - the same number of guesses :) ")
+      else println(s"Congratulations, ${gameResults.minBy(_._2)._1}, you won!")
+  } else guessingProcess(secretNumberToGuess(playerBSecretNumber,isPlayerBComputer),playerA)
 
   def guessingProcess(secretNumber: String, player: String): Int = {
     var numberOfGuesses = 0
@@ -31,10 +36,10 @@ object BullsAndCows extends App {
     println(s"It is your turn, $player!")
     while (!guess.equals(secretNumber)) {
       guess = readLine("Make your guess!")
-      while (!numberValidator(guess)) guess = readLine(s"Not valid guess. Try once again!")
+      while (!numberValidator(guess)) guess = readLine(s"Not valid guess. Enter it once again!")
       var bulls = 0
       var cows = 0
-      for (i <- 0 to guess.length-1) {
+      for (i <- 0 until guess.length) {
         if (guess(i).equals(secretNumber(i))) bulls += 1
         else if (secretNumber.contains(guess(i))) cows += 1
       }
@@ -44,11 +49,23 @@ object BullsAndCows extends App {
     numberOfGuesses
   }
 
-  def secretNumberToGuess(player: String): String = if (player.equals(players(0))) playerBSecretNumber else playerASecretNumber
+  def computerSecretNumber (): String = {
+    var secretNumber = ""
+    val list = (1 to 9).toList
+    val randomDigits = r.shuffle(list).take(4)
+    for (c <- randomDigits) secretNumber+= c.toString
+    println(s"Computer secretNumber: $secretNumber")
+    secretNumber
+  }
+
+  def secretNumberToGuess(player: String, isPlayerBComputer: Boolean): String = {
+    if (isPlayerBComputer) playerBSecretNumber
+    else if (player.equals(playerA)) playerBSecretNumber else playerASecretNumber
+  }
 
   def numberValidator(input: String): Boolean = {
     //checking char by ASCII code value if it is a digit 1 - 9
-    val check = for (i <- input if i.toInt > 48 && i.toInt < 58) yield i
+    val check = for (i <- input if i.toInt > 48 && i.toInt < 58 ) yield i
     if (check.length == input.length) true else false
   }
 
