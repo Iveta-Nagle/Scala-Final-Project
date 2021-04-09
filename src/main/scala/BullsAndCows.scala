@@ -4,7 +4,16 @@ object BullsAndCows extends App {
 
   //https://en.wikipedia.org/wiki/Bulls_and_Cows
   println("Let's start Bulls and Cows game!")
-  val players = Seq("Player A", "Player B")
+
+
+
+  val playerA = readLine("What is your name, Player A?")
+  var playerB = "Player B"
+
+  val isPlayerBComputer = readLine("Do you want to play against computer (Y/N)?").toUpperCase.startsWith("Y")
+  if (isPlayerBComputer) playerB = "Computer" else playerB = readLine("What is your name, Player B?")
+
+  val players = Seq(playerA, playerB)
   //TODO add entering player names and using them further
   var playerASecretNumber = readLine("Player A, enter your 4-digit secret number: ")
   var playerBSecretNumber = readLine("Player B, enter your 4-digit secret number: ")
@@ -23,14 +32,14 @@ object BullsAndCows extends App {
     while (!guess.equals(secretNumber)) {
       guess = readLine("Make your guess!")
       while (!numberValidator(guess)) guess = readLine(s"Not valid guess. Try once again!")
-      var bullCount = 0
-      var cowCount = 0
+      var bulls = 0
+      var cows = 0
       for (i <- 0 to guess.length-1) {
-        if (guess(i).equals(secretNumber(i))) bullCount += 1
-        else if (secretNumber.contains(guess(i))) cowCount += 1
+        if (guess(i).equals(secretNumber(i))) bulls += 1
+        else if (secretNumber.contains(guess(i))) cows += 1
       }
-      println(s"You got $bullCount bulls and $cowCount cows")
       numberOfGuesses += 1
+      if (bulls == secretNumber.length) println(s"You got all $bulls bulls with $numberOfGuesses guesses!") else println(s"You got $bulls bulls and $cows cows")
     }
     numberOfGuesses
   }
@@ -40,7 +49,7 @@ object BullsAndCows extends App {
   def numberValidator(input: String): Boolean = {
     //checking char by ASCII code value if it is a digit 1 - 9
     val check = for (i <- input if i.toInt > 48 && i.toInt < 58) yield i
-    if (check.length == 4) true else false
+    if (check.length == input.length) true else false
   }
 
 
