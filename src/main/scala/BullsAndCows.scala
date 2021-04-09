@@ -6,6 +6,9 @@ object BullsAndCows extends App {
   //https://en.wikipedia.org/wiki/Bulls_and_Cows
   println("Let's start Bulls and Cows game!")
 
+
+  //TODO make GameSettings class
+  //TODO make GameConstants object
   val playerA = readLine("What is your name, Player A?")
   var playerB = "Player B"
 
@@ -20,9 +23,12 @@ object BullsAndCows extends App {
   var playerASecretNumber = ""
   if (isPlayerBComputer) playerBSecretNumber = computerSecretNumber() else {
     playerASecretNumber = readLine(s"$playerA, enter your 4-digit secret number: ")
+    while (!numberValidator(playerASecretNumber)) playerASecretNumber = readLine(s"Not valid number. Enter it once again!")
     playerBSecretNumber = readLine(s"$playerB, enter your 4-digit secret number: ")
+    while (!numberValidator(playerBSecretNumber)) playerBSecretNumber = readLine(s"Not valid number. Enter it once again!")
   }
-  //TODO do numberValidator for entered secret number. Plus, need to make sure that digits do not repeat according to game rules
+
+  //TODO allow to choose number of digits (right now the game is made with 4 digit number)
 
   if (!isPlayerBComputer) {
     val gameResults = for (p <- players) yield (p, guessingProcess(secretNumberToGuess(p, isPlayerBComputer), p))
@@ -54,7 +60,7 @@ object BullsAndCows extends App {
     val list = (1 to 9).toList
     val randomDigits = r.shuffle(list).take(4)
     for (c <- randomDigits) secretNumber+= c.toString
-    println(s"Computer secretNumber: $secretNumber")
+    //println(s"Computer secretNumber: $secretNumber")
     secretNumber
   }
 
@@ -66,7 +72,8 @@ object BullsAndCows extends App {
   def numberValidator(input: String): Boolean = {
     //checking char by ASCII code value if it is a digit 1 - 9
     val check = for (i <- input if i.toInt > 48 && i.toInt < 58 ) yield i
-    if (check.length == input.length) true else false
+    if (check.length == input.length && check.distinct.length == check.length) true else false
+    //distinct size checks number of unique digits  - according to rules all must be different
   }
 
 
