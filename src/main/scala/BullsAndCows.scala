@@ -1,5 +1,36 @@
+import java.io.{File, FileInputStream}
+
+import org.yaml.snakeyaml.Yaml
+import org.yaml.snakeyaml.constructor.Constructor
+
+import scala.beans.BeanProperty
 import scala.io.StdIn.readLine
 import scala.util.Random
+
+class GameSettings {
+  @BeanProperty var playerA = "Anna"
+  @BeanProperty var playerB = "Peteris"
+  @BeanProperty var numberLength = 4
+
+  override def toString: String = s"Player A: $playerA, player B: $playerB, length of secret number: $numberLength"
+}
+
+object GameConstants {
+  val relativePath = "config.yaml"
+  val input = new FileInputStream(new File(relativePath))
+  val yaml = new Yaml(new Constructor(classOf[GameSettings]))
+  val settings: GameSettings = yaml.load(input).asInstanceOf[GameSettings]
+  println(settings)
+  var playerA: String = settings.playerA
+  var playerB: String = settings.playerB
+  var numberLength: Int = 4
+}
+
+class GameState(var playerA: String = GameConstants.playerA,
+                var playerB: String = GameConstants.playerB,
+                var numberLength: Int = GameConstants.numberLength) {
+  println(s"Instantiated our GameState object with $numberLength-digit numbers")
+}
 
 object BullsAndCows extends App {
 
@@ -9,22 +40,23 @@ object BullsAndCows extends App {
 
   //TODO make GameSettings class
   //TODO make GameConstants object
-  val playerA = readLine("What is your name, Player A?")
+  val playerA = readLine(s"What is your name, Player A? Press Enter to use default ${GameConstants.playerA}")
   var playerB = "Player B"
 
   val isPlayerBComputer = readLine("Do you want to play against computer (Y/N)?").toUpperCase.startsWith("Y")
   if (isPlayerBComputer) playerB = "Computer" else playerB = readLine("What is your name, Player B?")
 
   val players = Seq(playerA, playerB)
+  val numberLength = 4
 
   val r = new Random()
 
   var playerBSecretNumber = ""
   var playerASecretNumber = ""
   if (isPlayerBComputer) playerBSecretNumber = computerSecretNumber() else {
-    playerASecretNumber = readLine(s"$playerA, enter your 4-digit secret number: ")
+    playerASecretNumber = readLine(s"$playerA, enter your $numberLength-digit secret number: ")
     while (!numberValidator(playerASecretNumber)) playerASecretNumber = readLine(s"Not valid number. Enter it once again!")
-    playerBSecretNumber = readLine(s"$playerB, enter your 4-digit secret number: ")
+    playerBSecretNumber = readLine(s"$playerB, enter your $numberLength-digit secret number: ")
     while (!numberValidator(playerBSecretNumber)) playerBSecretNumber = readLine(s"Not valid number. Enter it once again!")
   }
 
