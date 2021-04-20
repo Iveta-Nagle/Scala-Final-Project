@@ -47,7 +47,7 @@ object BullsAndCows extends App {
   println("Let's start Bulls and Cows game!")
 
   val conn = DriverManager.getConnection(GameConstants.dbUrl)
-  migrateTable(conn) //creating table if it does not exist //TODO move it out of getTopPlayers
+  migrateTable(conn) //creating table if it does not exist
 
   val playerA = readLine(s"What is your name, Player A? Press Enter to use default ${GameConstants.playerA}")
 
@@ -91,28 +91,16 @@ if (!readLine("Select game mode:\n 1 - single player (guess a computer generated
 
 
 
-//  if (!state.isPlayerBComputer) {
-//    val gameResults = for (p <- players) yield (p, guessingProcess(secretNumberToGuess(p, state.isPlayerBComputer), p))
-//    if (gameResults.minBy(_._2) == gameResults.maxBy(_._2)) println("No winner - the same number of guesses :) ")
-//      else println(s"Congratulations, ${gameResults.minBy(_._2)._1}, you won!")
-//  } else guessingProcess(secretNumberToGuess(playerBSecretNumber,state.isPlayerBComputer),state.playerA)
-
-  var gameResults = for (p <- players) yield (p, 0)
-
-
   if (!state.isPlayerBComputer) {
     val gameResults = for (p <- players) yield (p, guessingProcess(secretNumberToGuess(p, state.isPlayerBComputer), p))
     state.guessesA = gameResults(0)._2
     state.guessesB = gameResults(1)._2
-    println(gameResults, gameResults(0))
     if (gameResults.minBy(_._2) == gameResults.maxBy(_._2)) println("No winner - the same number of guesses :) ")
-    else println(s"Congratulations, ${gameResults.minBy(_._2)._1}, you won!")
-  } else {
-    state.guessesA = guessingProcess(secretNumberToGuess(playerBSecretNumber,state.isPlayerBComputer),state.playerA)
-  }
-//
-//  println(state.guessesA)
-//  println(state.guessesB)
+      else println(s"Congratulations, ${gameResults.minBy(_._2)._1}, you won!")
+  } else state.guessesA = guessingProcess(secretNumberToGuess(playerBSecretNumber,state.isPlayerBComputer),state.playerA)
+
+  // insert game stats into database
+  insertGameStats(conn)
 
 
 
@@ -176,14 +164,14 @@ if (!readLine("Select game mode:\n 1 - single player (guess a computer generated
     statement.executeUpdate(sql)
   }
 
-  def insertGameStats(connection: Connection, guessesA: Int, guessesB: Int = 0):Unit = {
+  def insertGameStats(connection: Connection):Unit = {
     val insertSql =
       """
         |INSERT INTO gameStats(
-        |   playerNameA
-        |   playerNameB
-        |   numberLength
-        |   guessesA
+        |   playerNameA,
+        |   playerNameB,
+        |   numberLength,
+        |   guessesA,
         |   guessesB)
         |   VALUES(?,?,?,?,?)
       """.stripMargin
