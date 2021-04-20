@@ -42,8 +42,13 @@ object BullsAndCows extends App {
 
   val state = if (playerA.length == 0) new GameState()
               else new GameState(playerA)
+//
+//if (readLine("Do you want to play against computer (Y/N)?").toUpperCase.startsWith("Y")) {
+//  state.playerB = "Computer"
+//  state.isPlayerBComputer = true
+//} else state.playerB = readLine(s"What is your name, Player B? Press Enter to use default ${GameConstants.playerB}")
 
-if (readLine("Do you want to play against computer (Y/N)?").toUpperCase.startsWith("Y")) {
+if (readLine("Select game mode:\n 1 - single player (guess a computer generated number)\n 2 - 2 players (guess each other's numbers)").contains("1")) {
   state.playerB = "Computer"
   state.isPlayerBComputer = true
 } else state.playerB = readLine(s"What is your name, Player B? Press Enter to use default ${GameConstants.playerB}")
@@ -65,8 +70,10 @@ if (readLine("Do you want to play against computer (Y/N)?").toUpperCase.startsWi
   if (state.isPlayerBComputer) playerBSecretNumber = computerSecretNumber() else {
     playerASecretNumber = readLine(s"${state.playerA}, enter your ${state.numberLength}-digit secret number: ")
     while (!numberValidator(playerASecretNumber)) playerASecretNumber = readLine(s"Not valid number. Enter it once again!")
+    for (_ <- Range(0,30)) println("\n") // So that other player does not see the number (could not get readPassword to work)
     playerBSecretNumber = readLine(s"${state.playerB}, enter your ${state.numberLength}-digit secret number: ")
     while (!numberValidator(playerBSecretNumber)) playerBSecretNumber = readLine(s"Not valid number. Enter it once again!")
+    for (_ <- Range(0,30)) println("\n") // So that other player does not see the number (could not get readPassword to work)
   }
 
   if (!state.isPlayerBComputer) {
