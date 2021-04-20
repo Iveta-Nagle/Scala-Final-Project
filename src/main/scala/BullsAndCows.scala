@@ -48,7 +48,7 @@ object BullsAndCows extends App {
 //  state.isPlayerBComputer = true
 //} else state.playerB = readLine(s"What is your name, Player B? Press Enter to use default ${GameConstants.playerB}")
 
-if (readLine("Select game mode:\n 1 - single player (guess a computer generated number)\n 2 - 2 players (guess each other's numbers)").contains("1")) {
+if (!readLine("Select game mode:\n 1 - single player (guess a computer generated number)\n 2 - 2 players (guess each other's numbers)").contains("2")) { //default is single player
   state.playerB = "Computer"
   state.isPlayerBComputer = true
 } else state.playerB = readLine(s"What is your name, Player B? Press Enter to use default ${GameConstants.playerB}")
@@ -65,14 +65,16 @@ if (readLine("Select game mode:\n 1 - single player (guess a computer generated 
 
   val r = new Random()
 
+  val invalidNumberMessage = s"Not a valid number. Enter a number with ${state.numberLength} distinct digits."
+
   var playerBSecretNumber = ""
   var playerASecretNumber = ""
   if (state.isPlayerBComputer) playerBSecretNumber = computerSecretNumber() else {
     playerASecretNumber = readLine(s"${state.playerA}, enter your ${state.numberLength}-digit secret number: ")
-    while (!numberValidator(playerASecretNumber)) playerASecretNumber = readLine(s"Not valid number. Enter it once again!")
+    while (!numberValidator(playerASecretNumber)) playerASecretNumber = readLine(invalidNumberMessage)
     for (_ <- Range(0,30)) println("\n") // So that other player does not see the number (could not get readPassword to work)
     playerBSecretNumber = readLine(s"${state.playerB}, enter your ${state.numberLength}-digit secret number: ")
-    while (!numberValidator(playerBSecretNumber)) playerBSecretNumber = readLine(s"Not valid number. Enter it once again!")
+    while (!numberValidator(playerBSecretNumber)) playerBSecretNumber = readLine(invalidNumberMessage)
     for (_ <- Range(0,30)) println("\n") // So that other player does not see the number (could not get readPassword to work)
   }
 
@@ -88,7 +90,7 @@ if (readLine("Select game mode:\n 1 - single player (guess a computer generated 
     println(s"It is your turn, $player!")
     while (!guess.equals(secretNumber)) {
       guess = readLine("Make your guess!")
-      while (!numberValidator(guess)) guess = readLine(s"Not valid guess. Enter it once again!")
+      while (!numberValidator(guess)) guess = readLine(invalidNumberMessage)
       var bulls = 0
       var cows = 0
       for (i <- 0 until guess.length) {
