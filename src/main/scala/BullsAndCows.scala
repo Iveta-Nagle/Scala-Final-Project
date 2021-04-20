@@ -131,7 +131,7 @@ if (!readLine("Select game mode:\n 1 - single player (guess a computer generated
     for (c <- randomDigits) secretNumber+= c.toString
     //println(s"Computer secretNumber: $secretNumber")
     secretNumber
-    "1234"
+//    "1234"
   }
 
   def secretNumberToGuess(player: String, isPlayerBComputer: Boolean): String = {
