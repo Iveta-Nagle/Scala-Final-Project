@@ -12,6 +12,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="sbt: org.scala-lang:scala-library:2.13.5:jar" level="project" />
+    <orderEntry type="library" name="sbt: org.xerial:sqlite-jdbc:3.34.0:jar" level="project" />
     <orderEntry type="library" name="sbt: org.yaml:snakeyaml:1.28:jar" level="project" />
   </component>
 </module>

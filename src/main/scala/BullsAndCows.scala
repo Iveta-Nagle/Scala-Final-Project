@@ -1,9 +1,10 @@
 import java.io.{File, FileInputStream}
-
 import org.yaml.snakeyaml.Yaml
 import org.yaml.snakeyaml.constructor.Constructor
 
+import java.sql.{Connection, DriverManager, PreparedStatement}
 import scala.beans.BeanProperty
+import scala.collection.mutable
 import scala.io.StdIn.readLine
 import scala.util.Random
 
@@ -11,6 +12,7 @@ class GameSettings {
   @BeanProperty var playerA = "Anna"
   @BeanProperty var playerB = "Peteris"
   @BeanProperty var numberLength = 4
+  @BeanProperty var databaseLocation = "./src/resources/db/bullsandcows.db"
 
   override def toString: String = s"Player A: $playerA, player B: $playerB, length of secret number: $numberLength"
 }
@@ -24,19 +26,28 @@ object GameConstants {
   var playerA: String = settings.playerA
   var playerB: String = settings.playerB
   var numberLength: Int = settings.numberLength
+  val dbUrl: String = s"jdbc:sqlite:${settings.databaseLocation}" //for now we only support sqlite
+
 }
 
 class GameState(var playerA: String = GameConstants.playerA,
                 var playerB: String = GameConstants.playerB,
                 var numberLength: Int = GameConstants.numberLength,
-                var isPlayerBComputer: Boolean = false) {
+                var isPlayerBComputer: Boolean = false,
+                var guessesA: Int = 0,
+                var guessesB: Int = 0) {
   println(s"Instantiated our GameState object with $numberLength-digit numbers")
 }
+
+case class Player(name: String, guesses: Int)
 
 object BullsAndCows extends App {
 
   //https://en.wikipedia.org/wiki/Bulls_and_Cows
   println("Let's start Bulls and Cows game!")
+
+  val conn = DriverManager.getConnection(GameConstants.dbUrl)
+  migrateTable(conn) //creating table if it does not exist //TODO move it out of getTopPlayers
 
   val playerA = readLine(s"What is your name, Player A? Press Enter to use default ${GameConstants.playerA}")
 
@@ -78,11 +89,33 @@ if (!readLine("Select game mode:\n 1 - single player (guess a computer generated
     for (_ <- Range(0,30)) println("\n") // So that other player does not see the number (could not get readPassword to work)
   }
 
+
+
+//  if (!state.isPlayerBComputer) {
+//    val gameResults = for (p <- players) yield (p, guessingProcess(secretNumberToGuess(p, state.isPlayerBComputer), p))
+//    if (gameResults.minBy(_._2) == gameResults.maxBy(_._2)) println("No winner - the same number of guesses :) ")
+//      else println(s"Congratulations, ${gameResults.minBy(_._2)._1}, you won!")
+//  } else guessingProcess(secretNumberToGuess(playerBSecretNumber,state.isPlayerBComputer),state.playerA)
+
+  var gameResults = for (p <- players) yield (p, 0)
+
+
   if (!state.isPlayerBComputer) {
     val gameResults = for (p <- players) yield (p, guessingProcess(secretNumberToGuess(p, state.isPlayerBComputer), p))
+    state.guessesA = gameResults(0)._2
+    state.guessesB = gameResults(1)._2
+    println(gameResults, gameResults(0))
     if (gameResults.minBy(_._2) == gameResults.maxBy(_._2)) println("No winner - the same number of guesses :) ")
-      else println(s"Congratulations, ${gameResults.minBy(_._2)._1}, you won!")
-  } else guessingProcess(secretNumberToGuess(playerBSecretNumber,state.isPlayerBComputer),state.playerA)
+    else println(s"Congratulations, ${gameResults.minBy(_._2)._1}, you won!")
+  } else {
+    state.guessesA = guessingProcess(secretNumberToGuess(playerBSecretNumber,state.isPlayerBComputer),state.playerA)
+  }
+//
+//  println(state.guessesA)
+//  println(state.guessesB)
+
+
+
 
   def guessingProcess(secretNumber: String, player: String): Int = {
     var numberOfGuesses = 0
@@ -110,6 +143,7 @@ if (!readLine("Select game mode:\n 1 - single player (guess a computer generated
     for (c <- randomDigits) secretNumber+= c.toString
     //println(s"Computer secretNumber: $secretNumber")
     secretNumber
+    "1234"
   }
 
   def secretNumberToGuess(player: String, isPlayerBComputer: Boolean): String = {
@@ -122,6 +156,47 @@ if (!readLine("Select game mode:\n 1 - single player (guess a computer generated
     val check = for (i <- input if i.toInt > 48 && i.toInt < 58 ) yield i
     if (check.length == input.length && check.length == numberLength && check.distinct.length == check.length) true else false
     //distinct size checks number of unique digits  - according to rules all must be different
+  }
+
+  def migrateTable(conn:Connection) = {
+    val statement = conn.createStatement() //Creates a Statement object for sending SQL statements to the database. S
+
+    val sql =
+      """
+        |CREATE TABLE IF NOT EXISTS gameStats (
+        |	gameID INTEGER PRIMARY KEY,
+        | playerNameA TEXT NOT NULL,
+        | playerNameB TEXT NOT NULL,
+        |	numberLength INTEGER DEFAULT 0,
+        | guessesA INTEGER DEFAULT 0,
+        | guessesB INTEGER DEFAULT 0
+        |);
+        |""".stripMargin
+
+    statement.executeUpdate(sql)
+  }
+
+  def insertGameStats(connection: Connection, guessesA: Int, guessesB: Int = 0):Unit = {
+    val insertSql =
+      """
+        |INSERT INTO gameStats(
+        |   playerNameA
+        |   playerNameB
+        |   numberLength
+        |   guessesA
+        |   guessesB)
+        |   VALUES(?,?,?,?,?)
+      """.stripMargin
+
+      val preparedStmt: PreparedStatement = connection.prepareStatement(insertSql)
+      preparedStmt.setString(1, state.playerA)
+      preparedStmt.setString(2, state.playerB)
+      preparedStmt.setInt(3, state.numberLength)
+      preparedStmt.setInt(4, state.guessesA)
+      preparedStmt.setInt(5, state.guessesB)
+      preparedStmt.execute
+      preparedStmt.close()
+
   }
 
 
