@@ -1,43 +1,6 @@
-import java.io.{File, FileInputStream}
-import org.yaml.snakeyaml.Yaml
-import org.yaml.snakeyaml.constructor.Constructor
-
 import java.sql.{Connection, DriverManager, PreparedStatement}
-import scala.beans.BeanProperty
-import scala.collection.mutable
 import scala.io.StdIn.readLine
 import scala.util.Random
-
-class GameSettings {
-  @BeanProperty var playerA = "Anna"
-  @BeanProperty var playerB = "Peteris"
-  @BeanProperty var numberLength = 4
-  @BeanProperty var databaseLocation = "./src/resources/db/bullsandcows.db"
-
-  override def toString: String = s"Player A: $playerA, player B: $playerB, length of secret number: $numberLength"
-}
-
-object GameConstants {
-  val relativePath = "config.yaml"
-  val input = new FileInputStream(new File(relativePath))
-  val yaml = new Yaml(new Constructor(classOf[GameSettings]))
-  val settings: GameSettings = yaml.load(input).asInstanceOf[GameSettings]
-  println(settings)
-  var playerA: String = settings.playerA
-  var playerB: String = settings.playerB
-  var numberLength: Int = settings.numberLength
-  val dbUrl: String = s"jdbc:sqlite:${settings.databaseLocation}" //for now we only support sqlite
-
-}
-
-class GameState(var playerA: String = GameConstants.playerA,
-                var playerB: String = GameConstants.playerB,
-                var numberLength: Int = GameConstants.numberLength,
-                var isPlayerBComputer: Boolean = false,
-                var guessesA: Int = 0,
-                var guessesB: Int = 0) {
-  println(s"Instantiated our GameState object with $numberLength-digit numbers")
-}
 
 case class Player(name: String, guesses: Int)
 
@@ -53,18 +16,17 @@ object BullsAndCows extends App {
 
   val state = if (playerA.length == 0) new GameState()
               else new GameState(playerA)
-//
-//if (readLine("Do you want to play against computer (Y/N)?").toUpperCase.startsWith("Y")) {
-//  state.playerB = "Computer"
-//  state.isPlayerBComputer = true
-//} else state.playerB = readLine(s"What is your name, Player B? Press Enter to use default ${GameConstants.playerB}")
 
-if (!readLine("Select game mode:\n 1 - single player (guess a computer generated number)\n 2 - 2 players (guess each other's numbers)").contains("2")) { //default is single player
+ /** Selecting game mode and getting player names.
+ * Default is 1 player mode against computer.
+  */
+if (!readLine("Select game mode:\n 1 - single player (guess a computer generated number)\n 2 - 2 players (guess each other's numbers)").contains("2")) {
   state.playerB = "Computer"
   state.isPlayerBComputer = true
 } else state.playerB = readLine(s"What is your name, Player B? Press Enter to use default ${GameConstants.playerB}")
 
   if (state.playerB.length == 0) state.playerB = GameConstants.playerB
+
 
   val players = Seq(state.playerA, state.playerB)
 
@@ -76,6 +38,9 @@ if (!readLine("Select game mode:\n 1 - single player (guess a computer generated
 
   val r = new Random()
 
+  /**Error message for invalid entered number.
+   * Will be used for entering secret numbers and guesses.
+   */
   val invalidNumberMessage = s"Not a valid number. Enter a number with ${state.numberLength} distinct digits."
 
   var playerBSecretNumber = ""
@@ -90,7 +55,6 @@ if (!readLine("Select game mode:\n 1 - single player (guess a computer generated
   }
 
 
-
   if (!state.isPlayerBComputer) {
     val gameResults = for (p <- players) yield (p, guessingProcess(secretNumberToGuess(p, state.isPlayerBComputer), p))
     state.guessesA = gameResults(0)._2
@@ -101,8 +65,6 @@ if (!readLine("Select game mode:\n 1 - single player (guess a computer generated
 
   // insert game stats into database
   insertGameStats(conn)
-
-
 
 
   def guessingProcess(secretNumber: String, player: String): Int = {
@@ -124,14 +86,13 @@ if (!readLine("Select game mode:\n 1 - single player (guess a computer generated
     numberOfGuesses
   }
 
-  def computerSecretNumber (): String = {
+  def computerSecretNumber (numberLength: Int = 4): String = {
     var secretNumber = ""
     val list = (1 to 9).toList
-    val randomDigits = r.shuffle(list).take(4)
+    val randomDigits = r.shuffle(list).take(numberLength)
     for (c <- randomDigits) secretNumber+= c.toString
-    //println(s"Computer secretNumber: $secretNumber")
+    println(secretNumber)
     secretNumber
-//    "1234"
   }
 
   def secretNumberToGuess(player: String, isPlayerBComputer: Boolean): String = {
